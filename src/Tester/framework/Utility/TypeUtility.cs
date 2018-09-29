@@ -1,0 +1,840 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Numerics;
+using System.Reflection;
+using System.Text;
+using System.Threading;
+using expunit.framework.Exp;
+using Moq;
+
+namespace expunit.framework.Utility
+{
+    public static class TypeUtility
+    {
+        private const char NullChar = '\0';
+        private const string DefaultCulture = "en-US";
+        private const string Xml = "xml";
+        private const string Culture = "culture";
+        private const string EmptyGuidString = "00000000-0000-0000-0000-000000000000";
+        private const string ReferencedBoolean = "System.Boolean&";
+        private const string ReferencedString = "System.String&";
+        private const string SystemThreadingType = "System.Threading";
+
+        public static bool InitializeInstanceCollectionFields = true;
+        public static IDictionary<Type, dynamic> UserDefineTypesValue = new Dictionary<Type, dynamic>();
+
+        /// <summary>
+        ///     Create Instance of Specific Type
+        /// </summary>
+        /// <param name="type">Class Type</param>
+        /// <param name="listIndex"></param>
+        /// <param name="setDefaultValue"></param>
+        /// <param name="levelInitUninitializedMembers">Level to initialize nested properties and fields</param>
+        /// <returns>Instance object</returns>
+        public static dynamic CreateInstance(
+            this Type type,
+            int listIndex = 0,
+            bool setDefaultValue = false,
+            int levelInitUninitializedMembers = 1)
+        {
+            return CreateInstance(
+                type,
+                new Dictionary<string, dynamic>(),
+                listIndex,
+                setDefaultValue,
+                levelInitUninitializedMembers);
+        }
+
+        /// <summary>
+        ///     Create Instance of Specific Type
+        /// </summary>
+        /// <param name="type">Class Type</param>
+        /// <param name="fields">Custom field values</param>
+        /// <param name="listIndex"></param>
+        /// <param name="setDefaultValue"></param>
+        /// <param name="levelInitUninitializedFields">Level to initialize nested properties and fields</param>
+        /// <returns>Instance object</returns>
+        public static dynamic CreateInstance(
+            this Type type,
+            IDictionary<string, dynamic> fields,
+            int listIndex = 0,
+            bool setDefaultValue = false,
+            int levelInitUninitializedFields = 1)
+        {
+            dynamic instance = null;
+            if (type.IsAbstract || type.IsInterface)
+            {
+                instance = GetMock(type);
+            }
+
+            if (instance == null)
+            {
+                instance = Get(type, type.Name, 0, InitializeInstanceCollectionFields);
+            }
+
+            if (instance == null)
+            {
+                instance = CreateInstanceOfTypeHavingDefaultConstructor(type);
+            }
+
+            if (instance == null)
+            {
+                instance = CreateUninitializedObject(type);
+            }
+
+            if (instance != null && levelInitUninitializedFields > 0)
+            {
+                try
+                {
+                    levelInitUninitializedFields = levelInitUninitializedFields - 1;
+                    InitUninitializedFields(
+                        instance,
+                        levelInitUninitializedFields,
+                        fields,
+                        setDefaultValue,
+                        listIndex);
+                }
+                catch (Exception exp)
+                {
+                    Debug.WriteLine(exp);
+                }
+            }
+
+            return instance;
+        }
+
+        /// <summary>
+        ///     Generate value for primitive types
+        /// </summary>
+        /// <param name="type">Type</param>
+        /// <returns>Generated value</returns>
+        public static dynamic Get(this Type type)
+        {
+            return Get(type, string.Empty);
+        }
+
+        /// <summary>
+        ///     Generate value for primitive types
+        /// </summary>
+        /// <param name="parameterName">Parameter name</param>
+        /// <param name="type">Type</param>
+        /// <param name="index">Field or Property index</param>
+        /// <param name="initializeInstanceCollectionFields">Initialize Instance Collection Field</param>
+        /// <param name="setDefaultValues"></param>
+        /// <returns>Generated value</returns>
+        public static dynamic Get(this Type type,
+            string parameterName,
+            int index = 0,
+            bool initializeInstanceCollectionFields = true,
+            bool setDefaultValues = false)
+        {
+            if (type == null)
+            {
+                return null;
+            }
+
+            type = type.FullName != null && type.FullName.Contains(ReferencedBoolean) ?
+                typeof(bool) :
+                type;
+            type = type.FullName != null && type.FullName.Contains(ReferencedString) ?
+                typeof(string) :
+                type;
+
+            if (UserDefineTypesValue.ContainsKey(type))
+            {
+                return UserDefineTypesValue[type];
+            }
+
+            parameterName = string.IsNullOrWhiteSpace(parameterName) ?
+                type.Name :
+                parameterName;
+
+            if (type != typeof(sbyte) && type != typeof(sbyte?))
+            {
+                index += parameterName.Sum(Convert.ToInt32);
+            }
+            else
+            {
+                index += parameterName.Substring(0, 1).Sum(Convert.ToInt32);
+            }
+
+            parameterName = parameterName.ToLower();
+
+            if (type == typeof(sbyte) ||
+                type == typeof(sbyte?) ||
+                type == typeof(short) ||
+                type == typeof(short?) ||
+                type == typeof(ushort) ||
+                type == typeof(ushort?) ||
+                type == typeof(int) ||
+                type == typeof(int?) ||
+                type == typeof(uint) ||
+                type == typeof(uint?) ||
+                type == typeof(long) ||
+                type == typeof(long?) ||
+                type == typeof(ulong) ||
+                type == typeof(ulong?) ||
+                type == typeof(double) ||
+                type == typeof(double?) ||
+                type == typeof(float) ||
+                type == typeof(float?) ||
+                type == typeof(decimal) ||
+                type == typeof(decimal?))
+            {
+                return Convert.ChangeType(setDefaultValues ?
+                    0 :
+                    index, type);
+            }
+            if (type == typeof(BigInteger))
+            {
+                return setDefaultValues ?
+                    default(BigInteger) :
+                    new BigInteger(index);
+            }
+
+            if (type == typeof(char) || type == typeof(char?))
+            {
+                return setDefaultValues ?
+                    NullChar :
+                    (char)index;
+            }
+
+            if (type == typeof(DateTime))
+            {
+                return GetDateTime(index);
+            }
+
+            if (parameterName.EndsWith("id") && type == typeof(object))
+            {
+                return setDefaultValues ?
+                    0 :
+                    index;
+            }
+
+            if ((parameterName.EndsWith("type") ||
+                 parameterName.EndsWith("flag")) &&
+                type == typeof(string))
+            {
+                return setDefaultValues ?
+                    null :
+                    index.ToString();
+            }
+
+            if (parameterName.Contains(Xml) && type == typeof(string))
+            {
+                return setDefaultValues ?
+                    null :
+                    $"<UnitTest>{parameterName.ToPipeSeparatedCharacters()}-{index}</UnitTest>";
+            }
+
+            if (parameterName.EndsWith(Culture) && type == typeof(string))
+            {
+                return setDefaultValues ?
+                    Thread.CurrentThread.CurrentCulture.Name :
+                    DefaultCulture;
+            }
+
+            if (type == typeof(string))
+            {
+                return setDefaultValues ?
+                    null :
+                    $"{parameterName.ToPipeSeparatedCharacters()}-{index}";
+            }
+
+            if (type == typeof(bool) || type == typeof(bool?))
+            {
+                return !setDefaultValues && bool.Parse((index % 2 == 0).ToString());
+            }
+
+            if (type == typeof(Uri))
+            {
+                return setDefaultValues ?
+                    null :
+                    new Uri($"https://www.google.com.pk/FieldIndex={parameterName}-{index}");
+            }
+
+            if (type.IsAssignableFrom(typeof(Exception)))
+            {
+                return setDefaultValues ?
+                    null :
+                    new EmptyException(parameterName, index);
+            }
+
+            if (type == typeof(Guid) || type == typeof(Guid?))
+            {
+                return setDefaultValues ?
+                    type == typeof(Guid?) ?
+                        (Guid?)null :
+                        Guid.Empty :
+                    GetGuid(index);
+            }
+
+            if (IsACollection(type) &&
+                initializeInstanceCollectionFields &&
+                (type.GetElementType() != typeof(Type) ||
+                 type.GetGenericArguments()[0] != typeof(Type)))
+            {
+                return setDefaultValues ?
+                    null :
+                    type.GetElementType()?
+                        .GetArrayObjects(index) ??
+                    type.GetGenericArguments()[0]
+                        .GetListObjects(index);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Get Default Value
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static dynamic GetDefaultValue(this Type type)
+        {
+            return type.Get(string.Empty, 0, true, true);
+        }
+
+        private static string GetGuidString(this int fieldIndex)
+        {
+            var guid = EmptyGuidString;
+            var fieldLength = fieldIndex.ToString().Length;
+            guid = fieldIndex + guid.Substring(fieldLength, guid.Length - fieldLength);
+
+            return guid.Substring(0, guid.Length - fieldLength) + fieldIndex;
+        }
+
+        private static dynamic GetGuid(this int fieldIndex)
+        {
+            return Guid.Parse(GetGuidString(fieldIndex));
+        }
+
+        /// <summary>
+        ///     Get Field value for primitive types
+        /// </summary>
+        /// <param name="fieldName">Field Name</param>
+        /// <param name="type">Class type</param>
+        /// <returns>Field value</returns>
+        public static dynamic GetFieldValue(this Type type, string fieldName)
+        {
+            var field = FindFieldByName(type, fieldName);
+            if (field != null)
+            {
+                return Get(field.FieldType, $"{type.Name}.{fieldName}", GetFieldIndexByName(type, fieldName));
+            }
+
+            throw new FieldNotFoundException(fieldName, type.FullName);
+        }
+
+        public static dynamic CastValueWithRespectToType(dynamic obj, Type type)
+        {
+            if (type == null || type == typeof(void))
+            {
+                return obj;
+            }
+
+            try
+            {
+                obj = Convert.ChangeType(obj, type);
+            }
+            catch
+            {
+                // ignored
+            }
+
+            return obj;
+        }
+
+        /// <summary>
+        ///     Get Property value for primitive types
+        /// </summary>
+        /// <param name="propertyName">Property name</param>
+        /// <param name="type">Class type</param>
+        /// <returns>Property value</returns>
+        public static dynamic GetPropertyValue(this Type type, string propertyName)
+        {
+            PropertyInfo property = FindPropertyByName(type, propertyName);
+            if (property != null)
+            {
+                return Get(property.PropertyType, propertyName, GetFieldIndexByName(type, propertyName));
+            }
+
+            throw new PropertyNotFoundException(propertyName, type.FullName);
+        }
+
+        /// <summary>
+        ///     Find Field by name
+        /// </summary>
+        /// <param name="type">Class type</param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static FieldInfo FindFieldByName(this Type type, string name)
+        {
+            return FindFieldsContainingFieldName(type, name).FirstOrDefault(fieldInfo => fieldInfo.Name == name);
+        }
+
+        /// <summary>
+        ///     Find fields containing field name
+        /// </summary>
+        /// <param name="type">Class Type</param>
+        /// <param name="name">Field Name</param>
+        /// <returns>Fields</returns>
+        public static FieldInfo[] FindFieldsContainingFieldName(this Type type, string name)
+        {
+            var fieldInfos = type.GetFields(BindingFlags());
+
+            Type parentType = type.BaseType;
+            if (parentType != null)
+            {
+                foreach (FieldInfo fieldInfo in fieldInfos)
+                {
+                    if (fieldInfo.Name == name)
+                    {
+                        return fieldInfos;
+                    }
+                }
+
+                var parentFieldInfos = FindFieldsContainingFieldName(parentType, name);
+                fieldInfos = fieldInfos.Concat(parentFieldInfos).ToArray();
+            }
+
+
+            return fieldInfos;
+        }
+
+        /// <summary>
+        ///    Get all fields for specific type
+        /// </summary>
+        /// <param name="type">Class Type</param>
+        /// <returns>Fields</returns>
+        public static FieldInfo[] GetAllFields(this Type type)
+        {
+            var fieldInfos = type.GetFields(BindingFlags());
+
+            Type parentType = type.BaseType;
+            if (parentType != null)
+            {
+                var parentFieldInfos = GetAllFields(parentType);
+                fieldInfos = fieldInfos.Concat(parentFieldInfos).ToArray();
+            }
+
+
+            return fieldInfos;
+        }
+
+        /// <summary>
+        ///     Find Property by Name
+        /// </summary>
+        /// <param name="type">Class Name</param>
+        /// <param name="name">Property Name</param>
+        /// <returns>Property name</returns>
+        public static PropertyInfo FindPropertyByName(Type type, string name)
+        {
+            return FindPropertiesContainingPropertyName(type, name)
+                .FirstOrDefault(fieldInfo => fieldInfo.Name == name);
+        }
+
+        /// <summary>
+        ///     Find Properties containing specific property name
+        /// </summary>
+        /// <param name="type">Class type</param>
+        /// <param name="name"></param>
+        /// <returns>Properties</returns>
+        public static PropertyInfo[] FindPropertiesContainingPropertyName(Type type, string name)
+        {
+            var propertyInfos = type.GetProperties(BindingFlags());
+
+            var parentType = type.BaseType;
+            if (parentType != null)
+            {
+                if (propertyInfos.Any(fieldInfo => fieldInfo.Name == name))
+                {
+                    return propertyInfos;
+                }
+
+                var parentPropertyInfos = FindPropertiesContainingPropertyName(parentType, name);
+                propertyInfos = propertyInfos.Concat(parentPropertyInfos).ToArray();
+            }
+
+
+            return propertyInfos;
+        }
+
+        /// <summary>
+        ///     Get all properties for specific type
+        /// </summary>
+        /// <param name="type">Class type</param>
+        /// <returns>Properties</returns>
+        public static PropertyInfo[] GetAllProperties(this Type type)
+        {
+            var propertyInfos = type.GetProperties(BindingFlags());
+
+            Type parentType = type.BaseType;
+            if (parentType != null)
+            {
+                var parentPropertyInfo = GetAllProperties(parentType);
+                propertyInfos = propertyInfos.Concat(parentPropertyInfo).ToArray();
+            }
+
+
+            return propertyInfos;
+        }
+
+        internal static string TypeToString(dynamic obj)
+        {
+            if (obj == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                if (obj is char)
+                {
+                    obj = Encoding.Unicode.GetString(BitConverter.GetBytes((char)obj));
+                }
+                else if (obj is string)
+                {
+                    obj = "'" + obj.ToString().Replace("'", "''") + "'";
+                }
+                else if (obj is long)
+                {
+                    obj += "L";
+                }
+                else if (obj is double)
+                {
+                    obj += "D";
+                }
+                else if (obj is float)
+                {
+                    obj += "F";
+                }
+                else
+                {
+                    obj = obj.ToString();
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+
+            return obj.ToString();
+        }
+
+        public static bool IsACollection(this Type type)
+        {
+            return typeof(IEnumerable).IsAssignableFrom(type);
+        }
+
+        public static dynamic GetFirstObjectFromCollection(dynamic obj)
+        {
+            if (obj != null)
+            {
+                foreach (dynamic o in obj)
+                {
+                    return o;
+                }
+            }
+
+            return null;
+        }
+
+        private static dynamic GetArrayObjects(this Type type, int fieldIndex)
+        {
+            dynamic objects = Array.CreateInstance(type, 25);
+
+            for (var x = 0; x < objects.Length; x++)
+            {
+                var value = x + fieldIndex.ToString();
+                objects[x] = ParseValue(type, fieldIndex, value);
+            }
+
+            return objects;
+        }
+
+        private static dynamic GetListObjects(this Type type, int fieldIndex)
+        {
+            dynamic list = Activator.CreateInstance(typeof(List<>).MakeGenericType(type));
+
+            for (var x = 0; x < 25; x++)
+            {
+                var value = x + fieldIndex.ToString();
+                list.Add(ParseValue(type, fieldIndex, value));
+            }
+
+            return list;
+        }
+
+        private static dynamic ParseValue(Type type, int fieldIndex, string value)
+        {
+            if (type == typeof(int))
+            {
+                return int.Parse(value);
+            }
+
+            if (type == typeof(uint))
+            {
+                return uint.Parse(value);
+            }
+
+            if (type == typeof(double))
+            {
+                return double.Parse(value);
+            }
+
+            if (type == typeof(short))
+            {
+                return short.Parse(value);
+            }
+
+            if (type == typeof(ushort))
+            {
+                return ushort.Parse(value);
+            }
+
+            if (type == typeof(decimal))
+            {
+                return float.Parse(value);
+            }
+
+            if (type == typeof(float))
+            {
+                return float.Parse(value);
+            }
+
+            if (type == typeof(byte))
+            {
+                var max = Math.Max(byte.MaxValue, Convert.ToInt32(value));
+                while (max > byte.MaxValue)
+                {
+                    max = max - byte.MaxValue;
+                }
+
+                return byte.Parse(max.ToString());
+            }
+
+            if (type == typeof(sbyte))
+            {
+                var max = Math.Max(sbyte.MaxValue, Convert.ToInt32(value));
+                while (max > sbyte.MaxValue)
+                {
+                    max = max - sbyte.MaxValue;
+                }
+
+                return sbyte.Parse(max.ToString());
+            }
+
+            if (type == typeof(long))
+            {
+                return long.Parse(value);
+            }
+
+            if (type == typeof(ulong))
+            {
+                return ulong.Parse(value);
+            }
+
+            if (type == typeof(bool))
+            {
+                return int.Parse(value) % 2 == 0;
+            }
+
+            if (type == typeof(DateTime))
+            {
+                return GetDateTime(fieldIndex);
+            }
+
+            if (type == typeof(char))
+            {
+                return (char)int.Parse(value);
+            }
+
+            if (type == typeof(Guid))
+            {
+                return GetGuid(fieldIndex);
+            }
+
+            return type == typeof(string) ?
+                $"Test Output-{value}" :
+                CreateInstance(type, 0, false, 0);
+        }
+
+        private static int GetFieldIndexByName(this IReflect type, string fieldName)
+        {
+            for (var i = 0; i < type.GetFields(BindingFlags()).Length; i++)
+            {
+                if (type.GetFields(BindingFlags())[i].Name == fieldName)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static DateTime GetDateTime(int fieldIndex)
+        {
+            var max = DateTime.MaxValue;
+            var index = 1 + fieldIndex;
+            return new DateTime(
+                Math.Min(max.Year, 2000 + fieldIndex),
+                Math.Min(12, index),
+                Math.Min(27, index),
+                Math.Min(23, index),
+                Math.Min(59, index),
+                Math.Min(59, index));
+        }
+
+        public static dynamic CreateInstanceOfTypeHavingDefaultConstructor(this Type type)
+        {
+            return CreateInstanceOfTypeHavingPublicDefaultConstructor(type) ??
+                   CreateInstanceOfTypeHavingPrivateDefaultConstructor(type);
+        }
+
+        private static dynamic CreateInstanceOfTypeHavingPublicDefaultConstructor(this Type type)
+        {
+            dynamic instance = null;
+            if (IsPublicDefaultConstructorExist(type))
+            {
+                try
+                {
+                    instance = Activator.CreateInstance(type);
+                }
+                catch (Exception exp)
+                {
+                    Debug.WriteLine(exp);
+                }
+            }
+
+            return instance;
+        }
+
+        private static dynamic CreateInstanceOfTypeHavingPrivateDefaultConstructor(this Type type)
+        {
+            dynamic instance = null;
+            try
+            {
+                instance = Activator.CreateInstance(type, BindingFlags(), null, new object[] { }, null);
+            }
+            catch (Exception exp)
+            {
+                Debug.WriteLine(exp);
+            }
+
+            return instance;
+        }
+
+        internal static BindingFlags BindingFlags()
+        {
+            return System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic |
+                   System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static;
+        }
+
+        public static dynamic CreateUninitializedObject(this Type type)
+        {
+            dynamic instance = null;
+
+            try
+            {
+                instance = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
+            }
+            catch (Exception exp)
+            {
+                Debug.WriteLine(exp);
+            }
+
+            return instance;
+        }
+
+        public static dynamic GetMock(this Type type)
+        {
+            dynamic mock = null;
+            try
+            {
+                mock = Activator.CreateInstance(typeof(Mock<>).MakeGenericType(type));
+            }
+            catch (Exception exp)
+            {
+                Debug.WriteLine(exp);
+            }
+
+            return mock;
+        }
+
+        private static void InitUninitializedFields(this object instance,
+            int levelInitUninitializedMembers,
+            IDictionary<string, dynamic> fields,
+            bool setDefaultValues = false,
+            int listIndex = 0)
+        {
+            if (instance == null)
+            {
+                throw new ArgumentNullException(nameof(instance));
+            }
+
+            var type = instance.GetType();
+            var fieldInfos = type.GetAllFields();
+            for (var index = 0; index < fieldInfos.Length; index++)
+            {
+                var fieldInfo = fieldInfos[index];
+
+                try
+                {
+                    var typeInfo = fieldInfo.FieldType;
+                    dynamic defaultValue = fieldInfo.GetValue(instance);
+
+                    if (typeInfo.FullName != null &&
+                        !typeInfo.FullName.Contains(SystemThreadingType))
+                    {
+                        if (fields.ContainsKey(fieldInfo.Name))
+                        {
+                            fieldInfo.SetValue(instance, fields[fieldInfo.Name]);
+                            continue;
+                        }
+
+                        if (typeInfo == typeof(Type))
+                        {
+                            fieldInfo.SetValue(instance, instance.GetType());
+                            continue;
+                        }
+
+                        dynamic value = Get(typeInfo, $"{type.Name}.{fieldInfo.Name}", index + listIndex, InitializeInstanceCollectionFields ,setDefaultValues);
+                        if (value != null)
+                        {
+                            fieldInfo.SetValue(instance, value);
+                        }
+                        else if (defaultValue == null)
+                        {
+                            fieldInfo.SetValue(instance, type.CreateInstance(listIndex, setDefaultValues, levelInitUninitializedMembers));
+                        }
+                    }
+                }
+                catch (Exception exp)
+                {
+                    Debug.WriteLine($"Could not Set Property {fieldInfo.Name} because of {exp}");
+                }
+            }
+        }
+
+        private static string ToPipeSeparatedCharacters(this string str)
+        {
+            if (string.IsNullOrWhiteSpace(str))
+            {
+                return str;
+            }
+
+            return str.Aggregate(string.Empty, (current, character) => current + (character + "|")).Trim('|');
+        }
+
+        private static bool IsPublicDefaultConstructorExist(this Type classType)
+        {
+            ConstructorInfo constructorInfo = classType.GetConstructor(Type.EmptyTypes);
+
+            return constructorInfo != null && constructorInfo.IsPublic;
+        }
+    }
+}

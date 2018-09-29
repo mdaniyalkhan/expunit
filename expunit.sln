@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2027
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "expunit.framework", "src\Tester\framework\expunit.framework.csproj", "{80A68458-1E63-4FB7-95D1-D942226C1919}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "expunit.framework.tests", "src\Tester\tests\expunit.framework.tests.csproj", "{3E2B073C-6E22-4A22-9267-191680FF0AA1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{80A68458-1E63-4FB7-95D1-D942226C1919}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80A68458-1E63-4FB7-95D1-D942226C1919}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80A68458-1E63-4FB7-95D1-D942226C1919}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80A68458-1E63-4FB7-95D1-D942226C1919}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E2B073C-6E22-4A22-9267-191680FF0AA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E2B073C-6E22-4A22-9267-191680FF0AA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E2B073C-6E22-4A22-9267-191680FF0AA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E2B073C-6E22-4A22-9267-191680FF0AA1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F12F0B08-3976-43C5-BD1C-9852E6143BDB}
+	EndGlobalSection
+EndGlobal
