@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
@@ -22,6 +23,7 @@ namespace expunit.framework.Utility
         private const string ReferencedBoolean = "System.Boolean&";
         private const string ReferencedString = "System.String&";
         private const string SystemThreadingType = "System.Threading";
+        private const string MaxValueProperty = "MaxValue";
 
         public static bool InitializeInstanceCollectionFields = true;
         public static IDictionary<Type, dynamic> UserDefineTypesValue = new Dictionary<Type, dynamic>();
@@ -152,41 +154,14 @@ namespace expunit.framework.Utility
                 type.Name :
                 parameterName;
 
-            if (type != typeof(sbyte) && type != typeof(sbyte?))
-            {
-                index += parameterName.Sum(Convert.ToInt32);
-            }
-            else
-            {
-                index += parameterName.Substring(0, 1).Sum(Convert.ToInt32);
-            }
-
+            index += parameterName.Sum(Convert.ToInt32);
             parameterName = parameterName.ToLower();
 
-            if (type == typeof(sbyte) ||
-                type == typeof(sbyte?) ||
-                type == typeof(short) ||
-                type == typeof(short?) ||
-                type == typeof(ushort) ||
-                type == typeof(ushort?) ||
-                type == typeof(int) ||
-                type == typeof(int?) ||
-                type == typeof(uint) ||
-                type == typeof(uint?) ||
-                type == typeof(long) ||
-                type == typeof(long?) ||
-                type == typeof(ulong) ||
-                type == typeof(ulong?) ||
-                type == typeof(double) ||
-                type == typeof(double?) ||
-                type == typeof(float) ||
-                type == typeof(float?) ||
-                type == typeof(decimal) ||
-                type == typeof(decimal?))
+            if (IsNumber(type))
             {
                 return Convert.ChangeType(setDefaultValues ?
-                    0 :
-                    index, type);
+                    "0" :
+                    type.GetValueLessThanMaxValue(index.ToString()), type);
             }
             if (type == typeof(BigInteger))
             {
@@ -288,6 +263,30 @@ namespace expunit.framework.Utility
             return null;
         }
 
+        private static bool IsNumber(Type type)
+        {
+            return type == typeof(sbyte) ||
+                   type == typeof(sbyte?) ||
+                   type == typeof(short) ||
+                   type == typeof(short?) ||
+                   type == typeof(ushort) ||
+                   type == typeof(ushort?) ||
+                   type == typeof(int) ||
+                   type == typeof(int?) ||
+                   type == typeof(uint) ||
+                   type == typeof(uint?) ||
+                   type == typeof(long) ||
+                   type == typeof(long?) ||
+                   type == typeof(ulong) ||
+                   type == typeof(ulong?) ||
+                   type == typeof(double) ||
+                   type == typeof(double?) ||
+                   type == typeof(float) ||
+                   type == typeof(float?) ||
+                   type == typeof(decimal) ||
+                   type == typeof(decimal?);
+        }
+
         /// <summary>
         /// Get Default Value
         /// </summary>
@@ -384,7 +383,7 @@ namespace expunit.framework.Utility
         /// <returns>Fields</returns>
         public static FieldInfo[] FindFieldsContainingFieldName(this Type type, string name)
         {
-            var fieldInfos = type.GetFields(BindingFlags());
+            var fieldInfos = type.GetFields(ReflectionFlags);
 
             Type parentType = type.BaseType;
             if (parentType != null)
@@ -412,7 +411,7 @@ namespace expunit.framework.Utility
         /// <returns>Fields</returns>
         public static FieldInfo[] GetAllFields(this Type type)
         {
-            var fieldInfos = type.GetFields(BindingFlags());
+            var fieldInfos = type.GetFields(ReflectionFlags);
 
             Type parentType = type.BaseType;
             if (parentType != null)
@@ -445,7 +444,7 @@ namespace expunit.framework.Utility
         /// <returns>Properties</returns>
         public static PropertyInfo[] FindPropertiesContainingPropertyName(Type type, string name)
         {
-            var propertyInfos = type.GetProperties(BindingFlags());
+            var propertyInfos = type.GetProperties(ReflectionFlags);
 
             var parentType = type.BaseType;
             if (parentType != null)
@@ -470,7 +469,7 @@ namespace expunit.framework.Utility
         /// <returns>Properties</returns>
         public static PropertyInfo[] GetAllProperties(this Type type)
         {
-            var propertyInfos = type.GetProperties(BindingFlags());
+            var propertyInfos = type.GetProperties(ReflectionFlags);
 
             Type parentType = type.BaseType;
             if (parentType != null)
@@ -571,71 +570,10 @@ namespace expunit.framework.Utility
 
         private static dynamic ParseValue(Type type, int fieldIndex, string value)
         {
-            if (type == typeof(int))
+            if (IsNumber(type))
             {
-                return int.Parse(value);
-            }
-
-            if (type == typeof(uint))
-            {
-                return uint.Parse(value);
-            }
-
-            if (type == typeof(double))
-            {
-                return double.Parse(value);
-            }
-
-            if (type == typeof(short))
-            {
-                return short.Parse(value);
-            }
-
-            if (type == typeof(ushort))
-            {
-                return ushort.Parse(value);
-            }
-
-            if (type == typeof(decimal))
-            {
-                return float.Parse(value);
-            }
-
-            if (type == typeof(float))
-            {
-                return float.Parse(value);
-            }
-
-            if (type == typeof(byte))
-            {
-                var max = Math.Max(byte.MaxValue, Convert.ToInt32(value));
-                while (max > byte.MaxValue)
-                {
-                    max = max - byte.MaxValue;
-                }
-
-                return byte.Parse(max.ToString());
-            }
-
-            if (type == typeof(sbyte))
-            {
-                var max = Math.Max(sbyte.MaxValue, Convert.ToInt32(value));
-                while (max > sbyte.MaxValue)
-                {
-                    max = max - sbyte.MaxValue;
-                }
-
-                return sbyte.Parse(max.ToString());
-            }
-
-            if (type == typeof(long))
-            {
-                return long.Parse(value);
-            }
-
-            if (type == typeof(ulong))
-            {
-                return ulong.Parse(value);
+                value = type.GetValueLessThanMaxValue(value);
+                return Convert.ChangeType(value, type);
             }
 
             if (type == typeof(bool))
@@ -663,11 +601,23 @@ namespace expunit.framework.Utility
                 CreateInstance(type, 0, false, 0);
         }
 
+        private static string GetValueLessThanMaxValue(this IReflect type, string value)
+        {
+            var maxValue = Convert.ToDouble(type.GetField(MaxValueProperty, ReflectionFlags)?.GetValue(null));
+            var validValue = Convert.ToDouble(value);
+            while (validValue > maxValue)
+            {
+                validValue = validValue - maxValue;
+            }
+
+            return validValue.ToString(CultureInfo.InvariantCulture);
+        }
+
         private static int GetFieldIndexByName(this IReflect type, string fieldName)
         {
-            for (var i = 0; i < type.GetFields(BindingFlags()).Length; i++)
+            for (var i = 0; i < type.GetFields(ReflectionFlags).Length; i++)
             {
-                if (type.GetFields(BindingFlags())[i].Name == fieldName)
+                if (type.GetFields(ReflectionFlags)[i].Name == fieldName)
                 {
                     return i;
                 }
@@ -718,7 +668,7 @@ namespace expunit.framework.Utility
             dynamic instance = null;
             try
             {
-                instance = Activator.CreateInstance(type, BindingFlags(), null, new object[] { }, null);
+                instance = Activator.CreateInstance(type, ReflectionFlags, null, new object[] { }, null);
             }
             catch (Exception exp)
             {
@@ -728,11 +678,10 @@ namespace expunit.framework.Utility
             return instance;
         }
 
-        internal static BindingFlags BindingFlags()
-        {
-            return System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic |
-                   System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static;
-        }
+        internal static BindingFlags ReflectionFlags => BindingFlags.Instance |
+                                                     BindingFlags.NonPublic |
+                                                     BindingFlags.Public |
+                                                     BindingFlags.Static;
 
         public static dynamic CreateUninitializedObject(this Type type)
         {
@@ -802,7 +751,7 @@ namespace expunit.framework.Utility
                             continue;
                         }
 
-                        dynamic value = Get(typeInfo, $"{type.Name}.{fieldInfo.Name}", index + listIndex, InitializeInstanceCollectionFields ,setDefaultValues);
+                        dynamic value = Get(typeInfo, $"{type.Name}.{fieldInfo.Name}", index + listIndex, InitializeInstanceCollectionFields, setDefaultValues);
                         if (value != null)
                         {
                             fieldInfo.SetValue(instance, value);

@@ -124,7 +124,7 @@ namespace expunit.framework.Utility
 
         public static MethodInfo[] GetAllMethods(this Type type)
         {
-            MethodInfo[] result = type.GetMethods(TypeUtility.BindingFlags());
+            MethodInfo[] result = type.GetMethods(TypeUtility.ReflectionFlags);
 
             Type parentType = type.BaseType;
             if (parentType != null)

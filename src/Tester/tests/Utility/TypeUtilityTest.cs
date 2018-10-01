@@ -23,7 +23,7 @@ namespace expunit.framework.tests.Utility
         public void Test_GetValue_ForSByteType()
         {
             // Assert
-            ((sbyte)typeof(sbyte).Get()).ShouldBe((sbyte)83);
+            ((sbyte)typeof(sbyte).Get()).ShouldBe((sbyte)106);
         }
 
         [Test]
