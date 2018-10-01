@@ -168,18 +168,9 @@ namespace expunit.framework.Utility
 
             parameterName = parameterName.ToLower();
 
-            if (IsNumber(type))
+            if (type.IsNumber())
             {
-                if (type.IsGenericType)
-                {
-                    type = Nullable.GetUnderlyingType(type);
-                }
-
-                if (type == null)
-                {
-                    throw new InvalidOperationException(nameof(type));
-                }
-
+                type = GetNumberUnderlyingType(type);
                 return Convert.ChangeType(setDefaultValues ?
                     "0" :
                     type.GetValueLessThanMaxValue(index.ToString()), type);
@@ -284,7 +275,25 @@ namespace expunit.framework.Utility
             return null;
         }
 
-        private static bool IsNumber(Type type)
+        private static Type GetNumberUnderlyingType(this Type type)
+        {
+            if (type.IsNumber())
+            {
+                if (type.IsGenericType)
+                {
+                    type = Nullable.GetUnderlyingType(type);
+                }
+
+                if (type == null)
+                {
+                    throw new InvalidOperationException(nameof(type));
+                }
+            }
+
+            return type;
+        }
+
+        private static bool IsNumber(this Type type)
         {
             return type == typeof(sbyte) ||
                    type == typeof(sbyte?) ||
@@ -591,8 +600,9 @@ namespace expunit.framework.Utility
 
         private static dynamic ParseValue(Type type, int fieldIndex, string value)
         {
-            if (IsNumber(type))
+            if (type.IsNumber())
             {
+                type = GetNumberUnderlyingType(type);
                 value = type.GetValueLessThanMaxValue(value);
                 return Convert.ChangeType(value, type);
             }
@@ -622,7 +632,7 @@ namespace expunit.framework.Utility
                 CreateInstance(type, 0, false, 0);
         }
 
-        private static string GetValueLessThanMaxValue(this Type type, string value)
+        private static string GetValueLessThanMaxValue(this IReflect type, string value)
         {
             var maxValue = type.GetMaxValue();
             var validValue = Convert.ToDouble(value);
