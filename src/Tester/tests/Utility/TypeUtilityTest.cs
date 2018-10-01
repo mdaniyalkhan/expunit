@@ -56,6 +56,13 @@ namespace expunit.framework.tests.Utility
         }
 
         [Test]
+        public void Test_GetValueOfNullableIntegerGreaterThanMaxValue_ForIntegerType()
+        {
+            // Assert
+            ((int?)typeof(int?).Get(string.Empty, int.MaxValue)).ShouldBe(2147482687);
+        }
+
+        [Test]
         public void Test_GetValue_ForUIntegerType()
         {
             // Assert

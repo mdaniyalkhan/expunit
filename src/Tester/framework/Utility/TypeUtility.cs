@@ -170,6 +170,16 @@ namespace expunit.framework.Utility
 
             if (IsNumber(type))
             {
+                if (type.IsGenericType)
+                {
+                    type = Nullable.GetUnderlyingType(type);
+                }
+
+                if (type == null)
+                {
+                    throw new InvalidOperationException(nameof(type));
+                }
+
                 return Convert.ChangeType(setDefaultValues ?
                     "0" :
                     type.GetValueLessThanMaxValue(index.ToString()), type);
@@ -612,9 +622,9 @@ namespace expunit.framework.Utility
                 CreateInstance(type, 0, false, 0);
         }
 
-        private static string GetValueLessThanMaxValue(this IReflect type, string value)
+        private static string GetValueLessThanMaxValue(this Type type, string value)
         {
-            var maxValue = Convert.ToDouble(type.GetField(MaxValueProperty, ReflectionFlags)?.GetValue(null));
+            var maxValue = type.GetMaxValue();
             var validValue = Convert.ToDouble(value);
             while (validValue > maxValue)
             {
@@ -723,6 +733,11 @@ namespace expunit.framework.Utility
             }
 
             return mock;
+        }
+
+        private static double GetMaxValue(this IReflect type)
+        {
+            return Convert.ToDouble(type?.GetField(MaxValueProperty, ReflectionFlags)?.GetValue(null));
         }
 
         private static void InitUninitializedFields(this object instance,
