@@ -14,19 +14,21 @@ namespace expunit.framework.tests.TestClass
         private Dummy[] _dummyTestArray;
         private Exception _exception;
         private readonly string[] _stringArray;
-        private Double[] _doubleArray;
+        private double[] _doubleArray;
         private int[] _intArray;
-        private Single[] _floatArray;
+        private float[] _floatArray;
         private short[] _shortArray;
-        private Byte[] _byteArray;
+        private byte[] _byteArray;
+        private sbyte[] _sbyteArray;
         private char[] _charArray;
-        private Int64[] _longArray;
-        private Boolean[] _boolArray;
+        private long[] _longArray;
+        private bool[] _boolArray;
         private List<Dummy> _classList;
         private List<long> _longList;
         private Dictionary<string, string> _dictionary;
         private Dictionary<string, List<Dummy>> _mapListField;
         private string _message = null;
+        private Guid _cguid;
         private readonly string _message2 = null;
 
         public static string Empty()

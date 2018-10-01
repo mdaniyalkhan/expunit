@@ -56,14 +56,14 @@ namespace expunit.framework.tests
         [Test]
         public void TestMethod_GetSquareRoot()
         {
-            ExpressionTest<Dummy>.CreateTest("GetSquareRoot()", 25.9036676939772).TestAndVerify();
+            ExpressionTest<Dummy>.CreateTest("GetSquareRoot()", 25.9422435421457).TestAndVerify();
         }
 
         [Test]
         public void TestMethod_MethodWithListAsParameter()
         {
             ExpressionTest<Dummy>
-                .CreateMethodExpression(nameof(Dummy.MethodWithListAsParameter), "Test Output-0554 Test Output-1554").TestAndVerify();
+                .CreateMethodExpression(nameof(Dummy.MethodWithListAsParameter), "Test Output-0556 Test Output-1556").TestAndVerify();
         }
 
         [Test]
