@@ -47,6 +47,14 @@ namespace expunit.framework.tests.Utility
             ((int)typeof(int).Get()).ShouldBe(400);
         }
 
+
+        [Test]
+        public void Test_GetValueOfIntegerGreaterThanMaxValue_ForIntegerType()
+        {
+            // Assert
+            ((int)typeof(int).Get(string.Empty, int.MaxValue)).ShouldBe(2147483247);
+        }
+
         [Test]
         public void Test_GetValue_ForUIntegerType()
         {

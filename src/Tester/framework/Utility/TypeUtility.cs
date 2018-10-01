@@ -154,7 +154,18 @@ namespace expunit.framework.Utility
                 type.Name :
                 parameterName;
 
-            index += parameterName.Sum(Convert.ToInt32);
+            index = Convert.ToInt32(typeof(int).GetValueLessThanMaxValue(index.ToString()));
+
+            var paramterIntegerValue = parameterName.Sum(Convert.ToInt32);
+            if (Convert.ToDouble(index) + paramterIntegerValue < int.MaxValue)
+            {
+                index += paramterIntegerValue;
+            }
+            else
+            {
+                index -= paramterIntegerValue;
+            }
+
             parameterName = parameterName.ToLower();
 
             if (IsNumber(type))
@@ -174,7 +185,7 @@ namespace expunit.framework.Utility
             {
                 return setDefaultValues ?
                     NullChar :
-                    (char)index;
+                    (char) index;
             }
 
             if (type == typeof(DateTime))
@@ -242,7 +253,7 @@ namespace expunit.framework.Utility
             {
                 return setDefaultValues ?
                     type == typeof(Guid?) ?
-                        (Guid?)null :
+                        (Guid?) null :
                         Guid.Empty :
                     GetGuid(index);
             }
@@ -493,7 +504,7 @@ namespace expunit.framework.Utility
             {
                 if (obj is char)
                 {
-                    obj = Encoding.Unicode.GetString(BitConverter.GetBytes((char)obj));
+                    obj = Encoding.Unicode.GetString(BitConverter.GetBytes((char) obj));
                 }
                 else if (obj is string)
                 {
@@ -588,7 +599,7 @@ namespace expunit.framework.Utility
 
             if (type == typeof(char))
             {
-                return (char)int.Parse(value);
+                return (char) int.Parse(value);
             }
 
             if (type == typeof(Guid))
@@ -679,9 +690,9 @@ namespace expunit.framework.Utility
         }
 
         internal static BindingFlags ReflectionFlags => BindingFlags.Instance |
-                                                     BindingFlags.NonPublic |
-                                                     BindingFlags.Public |
-                                                     BindingFlags.Static;
+                                                        BindingFlags.NonPublic |
+                                                        BindingFlags.Public |
+                                                        BindingFlags.Static;
 
         public static dynamic CreateUninitializedObject(this Type type)
         {
