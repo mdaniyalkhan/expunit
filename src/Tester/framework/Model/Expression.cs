@@ -9,11 +9,11 @@ namespace expunit.framework.Model
     /// </summary>
     public class Expression<T>
     {
-        public string MethodName { get; set; }
-        public Type[] ParameterTypes { get; set; }
+        public string MethodName { get; }
+        public Type[] ParameterTypes { get; private set; }
         public object[] ParameterValues { get; set; }
-        public bool PassNullParameterValues { get; set; }
-        public ExpressionTest<T> ExpressionTest { get; set; }
+        public bool PassNullParameterValues { get; }
+        public ExpressionTest<T> ExpressionTest { get; }
         public Type ReturnType { get; set; }
 
         private Expression(string methodName, bool passNullParameterValues, object[] parameterValues, ExpressionTest<T> expressionTest)

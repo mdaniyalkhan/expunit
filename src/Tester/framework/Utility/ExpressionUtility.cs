@@ -156,7 +156,7 @@ namespace expunit.framework.Utility
             var builder = new StringBuilder();
             builder.Append("{");
             dynamic array = val;
-            for (int index = 0; index < array.Length; index++)
+            for (var index = 0; index < array.Length; index++)
             {
                 builder.Append(array[0] is string ?
                     "'" + array[0] + "'" :

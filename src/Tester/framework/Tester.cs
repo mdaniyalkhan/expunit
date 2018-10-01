@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using expunit.framework.Model;
 
 namespace expunit.framework
@@ -35,7 +34,7 @@ namespace expunit.framework
 
         private void VerifyTests<T>(IEnumerable<Expression<T>> methodsToBeTest)
         {
-            foreach (Expression<T> methodToBeVerify  in methodsToBeTest)
+            foreach (var methodToBeVerify  in methodsToBeTest)
             {
                 if (!IsMethodToBeSkipped(methodToBeVerify))
                 {
@@ -46,9 +45,9 @@ namespace expunit.framework
 
         private bool IsMethodToBeSkipped<T>(Expression<T> expressionToBeTested)
         {
-            Type target = expressionToBeTested.ExpressionTest.Target.Type;
-            string targetClassName = target.FullName;
-            string methodName = expressionToBeTested.MethodName;
+            var target = expressionToBeTested.ExpressionTest.Target.Type;
+            var targetClassName = target.FullName;
+            var methodName = expressionToBeTested.MethodName;
             return target.IsAbstract ||
                    target.IsInterface ||
                    MethodNamesToBeSkipped.Contains(methodName) ||

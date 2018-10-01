@@ -10,7 +10,7 @@ namespace expunit.framework.Utility
     {
         internal static void SetTestActualOutput<T>(this ExpressionTest<T> expressionTest, object[] expressionValues)
         {
-            for (int i = 0; i < expressionValues.Length; i++)
+            for (var i = 0; i < expressionValues.Length; i++)
             {
                 try
                 {
@@ -59,27 +59,27 @@ namespace expunit.framework.Utility
 
             var parentExpressions = new object[expressionTest.Expressions.Length];
 
-            for (int i = 0; i < expressionTest.Expressions.Length; i++)
+            for (var i = 0; i < expressionTest.Expressions.Length; i++)
             {
-                string expression = expressionTest.Expressions[i];
+                var expression = expressionTest.Expressions[i];
                 expression = Regex.Replace(expression, "\\[", ".[");
                 expression = expression.Replace("this.", "");
-                string[] members = expression.Split('.');
+                var members = expression.Split('.');
 
-                for (int index = 0; index < members.Length; index++)
+                for (var index = 0; index < members.Length; index++)
                 {
-                    string member = Regex.Replace(members[index], "\\(\\)", "");
+                    var member = Regex.Replace(members[index], "\\(\\)", "");
                     if (parentExpressions[i] == null)
                     {
                         parentExpressions[i] = expressionTest.TargetInstance;
                     }
 
-                    Type parentExpressionClass = parentExpressions[i] == null
+                    var parentExpressionClass = parentExpressions[i] == null
                         ? expressionTest.Target.Type
                         : parentExpressions[i].GetType();
-                    FieldInfo fieldInfo = parentExpressionClass.FindFieldByName(member);
-                    PropertyInfo propertyGetter = TypeUtility.FindPropertyByName(parentExpressionClass, member);
-                    MethodInfo method = parentExpressionClass.FindMethodByName(member);
+                    var fieldInfo = parentExpressionClass.FindFieldByName(member);
+                    var propertyGetter = TypeUtility.FindPropertyByName(parentExpressionClass, member);
+                    var method = parentExpressionClass.FindMethodByName(member);
 
                     if (fieldInfo == null && propertyGetter == null && method == null)
                     {
@@ -113,7 +113,7 @@ namespace expunit.framework.Utility
         {
             if (method != null)
             {
-                object[] methodParameters = method.GetMethodParametersValues();
+                var methodParameters = method.GetMethodParametersValues();
                 parentExpression = method.Invoke(!method.IsStatic ? parentExpression : null, methodParameters);
             }
             if (fieldInfo != null)

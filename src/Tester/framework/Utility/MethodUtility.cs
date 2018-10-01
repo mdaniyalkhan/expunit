@@ -14,7 +14,7 @@ namespace expunit.framework.Utility
             MethodInfo result = null;
             var target = expression.ExpressionTest.Target.Type;
             var methodName = expression.MethodName;
-            foreach (MethodInfo methodInfo in target.GetMethodsByName(methodName))
+            foreach (var methodInfo in target.GetMethodsByName(methodName))
             {
                 if (IsMethodParametersMatched(methodInfo.GetParameters(), expression.ParameterTypes))
                 {
@@ -42,12 +42,12 @@ namespace expunit.framework.Utility
 
             expression.ReturnType = result.ReturnType;
 
-            object[] expectedOutputs = expression.ExpressionTest.ExpectedOutputs;
+            var expectedOutputs = expression.ExpressionTest.ExpectedOutputs;
             if (expectedOutputs != null)
             {
-                for (int i = 0; i < expectedOutputs.Length; i++)
+                for (var i = 0; i < expectedOutputs.Length; i++)
                 {
-                    object expectedValue = expectedOutputs[i];
+                    var expectedValue = expectedOutputs[i];
                     if (expectedValue != null)
                     {
                         expression.ExpressionTest.ExpectedOutputs[i] = TypeUtility.CastValueWithRespectToType(expectedValue, expression.ReturnType);
@@ -60,13 +60,12 @@ namespace expunit.framework.Utility
 
         internal static object[] GetMethodParametersValues(this MethodInfo methodInfo)
         {
-            int totalNumberOfFields = methodInfo.GetTotalNumberOfMembers();
-            ParameterInfo[] parameterInfo = methodInfo.GetParameters();
-            object[] parameters = new object[parameterInfo.Length];
-            for (int index = 0; index < parameterInfo.Length; index++)
+            var totalNumberOfFields = methodInfo.GetTotalNumberOfMembers();
+            var parameterInfo = methodInfo.GetParameters();
+            var parameters = new object[parameterInfo.Length];
+            for (var index = 0; index < parameterInfo.Length; index++)
             {
-                ParameterInfo parameterType = parameterInfo[index];
-
+                var parameterType = parameterInfo[index];
                 if (parameterType.ParameterType == typeof(Type))
                 {
                     parameters[index] = methodInfo.GetType();
@@ -92,7 +91,7 @@ namespace expunit.framework.Utility
             var parameters = new object[parameterInfos.Length];
             for (var index = 0; index < parameterInfos.Length; index++)
             {
-                ParameterInfo parameterType = parameterInfos[index];
+                var parameterType = parameterInfos[index];
                 parameters[index] = parameterType.ParameterType.GetDefaultValue();
             }
 
@@ -122,14 +121,14 @@ namespace expunit.framework.Utility
             return target.GetAllMethods().Where(x => x.Name == methodName).ToList();
         }
 
-        public static MethodInfo[] GetAllMethods(this Type type)
+        public static IEnumerable<MethodInfo> GetAllMethods(this Type type)
         {
-            MethodInfo[] result = type.GetMethods(TypeUtility.ReflectionFlags);
+            var result = type.GetMethods(TypeUtility.ReflectionFlags);
 
-            Type parentType = type.BaseType;
+            var parentType = type.BaseType;
             if (parentType != null)
             {
-                MethodInfo[] parentClassMethods = parentType.GetAllMethods();
+                var parentClassMethods = parentType.GetAllMethods();
                 result = result.Concat(parentClassMethods).ToArray();
             }
 

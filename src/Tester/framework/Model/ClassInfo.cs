@@ -17,12 +17,12 @@ namespace expunit.framework.Model
         /// <summary>
         /// Class Type
         /// </summary>
-        public Type Type { get; set; }
+        public Type Type { get; }
 
         /// <summary>
         /// Class Fields
         /// </summary>
-        public IDictionary<string, object> ClassFields { get; set; }
+        public IDictionary<string, object> ClassFields { get; }
 
         public static ClassInfo<T> Create()
         {

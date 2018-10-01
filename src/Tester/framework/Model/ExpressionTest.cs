@@ -6,26 +6,26 @@ namespace expunit.framework.Model
 {
     public class ExpressionTest<T>
     {
-        public string Name { get; set; }
-        public ClassInfo<T> Target { get; set; }
+        public string Name { private get; set; }
+        public ClassInfo<T> Target { get; }
         public string[] Expressions { get; set; }
-        public object ClassInstance { get; private set; }
         public Expression<T> ExpressionInfo { get; set; }
-        public object[] ExpectedOutputs { get; set; }
-        public object[] ActualOutputs { get; set; }
-        public string[] ErrorMessages { get; set; }
-        public string[] OutputExpressions { get; set; }
+        public object[] ExpectedOutputs { get; private set; }
+        public object[] ActualOutputs { get; private set; }
 
+        private string[] _errorMessages;
+        private string[] _outputExpressions;
+        private object _classInstance;
         private object _targetInstance;
 
         public object TargetInstance
         {
-            get => _targetInstance;
+            get { return _targetInstance; }
             set
             {
-                if (ClassInstance == null)
+                if (_classInstance == null)
                 {
-                    ClassInstance = value;
+                    _classInstance = value;
                 }
 
                 _targetInstance = value;
@@ -35,7 +35,7 @@ namespace expunit.framework.Model
         private ExpressionTest(ClassInfo<T> target)
         {
             Target = target;
-            ErrorMessages = new string[1];
+            _errorMessages = new string[1];
             ActualOutputs = new object[1];
         }
 
@@ -127,7 +127,7 @@ namespace expunit.framework.Model
             return new ExpressionTest<T>(ClassInfo<T>.Create())
             {
                 Expressions = new[] { expression },
-                OutputExpressions = new[] { "@p0" }
+                _outputExpressions = new[] { "@p0" }
             };
         }
 
@@ -142,7 +142,7 @@ namespace expunit.framework.Model
             return new ExpressionTest<T>(target)
             {
                 Expressions = new[] { expression },
-                OutputExpressions = new[] { "@p0" }
+                _outputExpressions = new[] { "@p0" }
             };
         }
 
@@ -170,7 +170,7 @@ namespace expunit.framework.Model
             {
                 Expressions = expressions,
                 ExpectedOutputs = expectedOutputs,
-                ErrorMessages = new string[expectedOutputs.Length],
+                _errorMessages = new string[expectedOutputs.Length],
                 ActualOutputs = new object[expectedOutputs.Length]
             };
         }
@@ -195,7 +195,7 @@ namespace expunit.framework.Model
         {
             return new ExpressionTest<T>(target)
             {
-                OutputExpressions = new[] { outputExpression }
+                _outputExpressions = new[] { outputExpression }
             };
         }
 
@@ -234,7 +234,7 @@ namespace expunit.framework.Model
             return new ExpressionTest<T>(target)
             {
                 Expressions = new[] { expression },
-                OutputExpressions = new[] { outputExpression }
+                _outputExpressions = new[] { outputExpression }
             };
         }
 
@@ -273,8 +273,8 @@ namespace expunit.framework.Model
             return new ExpressionTest<T>(target)
             {
                 Expressions = expressions,
-                OutputExpressions = outputExpressions,
-                ErrorMessages = new string[outputExpressions.Length],
+                _outputExpressions = outputExpressions,
+                _errorMessages = new string[outputExpressions.Length],
                 ActualOutputs = new object[outputExpressions.Length]
             };
         }
@@ -296,18 +296,18 @@ namespace expunit.framework.Model
         /// </summary>
         public void SetErrorMessages()
         {
-            for (int i = 0; i < ExpectedOutputs.Length; i++)
+            for (var i = 0; i < ExpectedOutputs.Length; i++)
             {
                 var expression = string.Empty;
-                if (Expressions != null && OutputExpressions != null)
+                if (Expressions != null && _outputExpressions != null)
                 {
-                    expression = $"Testing Expression [{Expressions[i]}] and Output Expression [{OutputExpressions[i]}]";
+                    expression = $"Testing Expression [{Expressions[i]}] and Output Expression [{_outputExpressions[i]}]";
                 }
 
                 var targetMember = string.IsNullOrEmpty(TargetMembers()[i]) ?
                     string.Empty :
                     TargetMembers()[i];
-                ErrorMessages[i] =
+                _errorMessages[i] =
                     $"[{Name} class [{Target.Type.FullName}] - {expression} Expected {targetMember} value: {SerializeUtility.Serialize(ExpectedOutputs[i])} != Actual {targetMember} value: {SerializeUtility.Serialize(ActualOutputs[i])}]";
             }
         }
@@ -318,7 +318,7 @@ namespace expunit.framework.Model
             {
                 var targetMembers = new string[Expressions.Length];
 
-                for (int x = 0; x < Expressions.Length; x++)
+                for (var x = 0; x < Expressions.Length; x++)
                 {
                     targetMembers[x] = !string.IsNullOrEmpty(Expressions[x]) ?
                         Expressions[x] :
@@ -358,11 +358,11 @@ namespace expunit.framework.Model
         public void SetActualOutputs()
         {
             var expressions = Expressions;
-            object targetInstance = TargetInstance;
-            if (OutputExpressions != null)
+            var targetInstance = TargetInstance;
+            if (_outputExpressions != null)
             {
-                Expressions = OutputExpressions;
-                TargetInstance = ClassInstance;
+                Expressions = _outputExpressions;
+                TargetInstance = _classInstance;
                 ExpectedOutputs = this.ResolveExpressionValue();
                 Expressions = expressions;
                 TargetInstance = targetInstance;
@@ -378,7 +378,7 @@ namespace expunit.framework.Model
         /// <param name="message"></param>
         public void Verify(string message = "")
         {
-            for (int i = 0; i < ExpectedOutputs.Length; i++)
+            for (var i = 0; i < ExpectedOutputs.Length; i++)
             {
                 if (ExpectedOutputs[i] is char)
                 {
@@ -393,11 +393,11 @@ namespace expunit.framework.Model
                 if (!Regex.Replace(SerializeUtility.Serialize(ExpectedOutputs[i]), "\\\\u", "\\u").Equals(
                     Regex.Replace(SerializeUtility.Serialize(ActualOutputs[i]), "\\\\u", "\\u")))
                 {
-                    string methodName = string.IsNullOrEmpty(message) ?
+                    var methodName = string.IsNullOrEmpty(message) ?
                         "" :
                         $"Testing Expression: {message}";
 
-                    throw new NoMatchedException($"{methodName} {ErrorMessages[i]}");
+                    throw new NoMatchedException($"{methodName} {_errorMessages[i]}");
                 }
             }
         }

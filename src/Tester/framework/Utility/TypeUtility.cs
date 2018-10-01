@@ -355,7 +355,7 @@ namespace expunit.framework.Utility
         /// <returns>Property value</returns>
         public static dynamic GetPropertyValue(this Type type, string propertyName)
         {
-            PropertyInfo property = FindPropertyByName(type, propertyName);
+            var property = FindPropertyByName(type, propertyName);
             if (property != null)
             {
                 return Get(property.PropertyType, propertyName, GetFieldIndexByName(type, propertyName));
@@ -381,14 +381,14 @@ namespace expunit.framework.Utility
         /// <param name="type">Class Type</param>
         /// <param name="name">Field Name</param>
         /// <returns>Fields</returns>
-        public static FieldInfo[] FindFieldsContainingFieldName(this Type type, string name)
+        public static IEnumerable<FieldInfo> FindFieldsContainingFieldName(this Type type, string name)
         {
             var fieldInfos = type.GetFields(ReflectionFlags);
 
-            Type parentType = type.BaseType;
+            var parentType = type.BaseType;
             if (parentType != null)
             {
-                foreach (FieldInfo fieldInfo in fieldInfos)
+                foreach (var fieldInfo in fieldInfos)
                 {
                     if (fieldInfo.Name == name)
                     {
@@ -413,7 +413,7 @@ namespace expunit.framework.Utility
         {
             var fieldInfos = type.GetFields(ReflectionFlags);
 
-            Type parentType = type.BaseType;
+            var parentType = type.BaseType;
             if (parentType != null)
             {
                 var parentFieldInfos = GetAllFields(parentType);
@@ -442,7 +442,7 @@ namespace expunit.framework.Utility
         /// <param name="type">Class type</param>
         /// <param name="name"></param>
         /// <returns>Properties</returns>
-        public static PropertyInfo[] FindPropertiesContainingPropertyName(Type type, string name)
+        public static IEnumerable<PropertyInfo> FindPropertiesContainingPropertyName(Type type, string name)
         {
             var propertyInfos = type.GetProperties(ReflectionFlags);
 
@@ -471,7 +471,7 @@ namespace expunit.framework.Utility
         {
             var propertyInfos = type.GetProperties(ReflectionFlags);
 
-            Type parentType = type.BaseType;
+            var parentType = type.BaseType;
             if (parentType != null)
             {
                 var parentPropertyInfo = GetAllProperties(parentType);
@@ -533,7 +533,7 @@ namespace expunit.framework.Utility
         {
             if (obj != null)
             {
-                foreach (dynamic o in obj)
+                foreach (var o in obj)
                 {
                     return o;
                 }
@@ -751,7 +751,7 @@ namespace expunit.framework.Utility
                             continue;
                         }
 
-                        dynamic value = Get(typeInfo, $"{type.Name}.{fieldInfo.Name}", index + listIndex, InitializeInstanceCollectionFields, setDefaultValues);
+                        var value = Get(typeInfo, $"{type.Name}.{fieldInfo.Name}", index + listIndex, InitializeInstanceCollectionFields, setDefaultValues);
                         if (value != null)
                         {
                             fieldInfo.SetValue(instance, value);
@@ -781,7 +781,7 @@ namespace expunit.framework.Utility
 
         private static bool IsPublicDefaultConstructorExist(this Type classType)
         {
-            ConstructorInfo constructorInfo = classType.GetConstructor(Type.EmptyTypes);
+            var constructorInfo = classType.GetConstructor(Type.EmptyTypes);
 
             return constructorInfo != null && constructorInfo.IsPublic;
         }
