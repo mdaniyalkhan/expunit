@@ -9,4 +9,4 @@ Library main points are following:
 * Have option to define custom method response and exception for mocking frameworks.
 * Have option to skip specific method.
 
-For Method Tester Examples code [here](https://github.com/trilogy-group/aurea.methodtester/blob/master/src/test/java/com/aurea/methodtest/methodtester/TesterTest.java).
+For Method Tester Examples code [here](https://github.com/mdaniyalkhan/expunit/blob/master/src/Tester/tests/TesterTests.cs).
