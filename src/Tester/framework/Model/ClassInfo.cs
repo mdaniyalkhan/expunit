@@ -17,7 +17,7 @@ namespace expunit.framework.Model
         /// <summary>
         /// Class Type
         /// </summary>
-        public Type Type { get; }
+        public Type Type { get; internal set; }
 
         /// <summary>
         /// Class Fields

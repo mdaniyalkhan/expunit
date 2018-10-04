@@ -10,6 +10,51 @@ namespace expunit.framework.Utility
 {
     public static class ExpressionUtility
     {
+        public static T Evaluate<T>(this object instance, string expression)
+        {
+            if (instance == null)
+            {
+                throw new ArgumentNullException(nameof(instance));
+            }
+
+            if (expression == null)
+            {
+                throw new ArgumentNullException(nameof(expression));
+            }
+
+            var expressionTest = ExpressionTest<T>.CreateWithExpression(expression);
+            expressionTest.TargetInstance = instance;
+            expressionTest.Target.Type = instance.GetType();
+            expressionTest.Test();
+
+            return (T) expressionTest.ActualOutputs.First();
+        }
+
+        public static T Evaluate<T>(this object instance, string method, string expression)
+        {
+            if (instance == null)
+            {
+                throw new ArgumentNullException(nameof(instance));
+            }
+
+            if (method == null)
+            {
+                throw new ArgumentNullException(nameof(method));
+            }
+
+            if (expression == null)
+            {
+                throw new ArgumentNullException(nameof(expression));
+            }
+
+            var expr = Expression<T>.Create(method,
+                ExpressionTest<T>.CreateWithExpression(expression));
+            expr.ExpressionTest.Target.Type = instance.GetType();
+            expr.ExpressionTest.TargetInstance = instance;
+
+            throw new InvalidOperationException($"[{expression}] is Invalid!");
+        }
+
         public static object[] ResolveExpressionValue<T>(this ExpressionTest<T> expressionTest)
         {
             if (expressionTest.Expressions == null)

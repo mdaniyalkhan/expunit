@@ -65,6 +65,10 @@ namespace expunit.framework.Model
         /// </summary>
         public void Test()
         {
+            if (ExpressionTest.TargetInstance == null)
+            {
+                ExpressionTest.TargetInstance = ExpressionTest.Target.Type.CreateInstance(ExpressionTest.Target.ClassFields);
+            }
             InvokeMethod();
             ExpressionTest.SetActualOutputs();
         }
@@ -88,7 +92,6 @@ namespace expunit.framework.Model
 
         private void SetupMethodTest(string methodName, ExpressionTest<T> expressionTest)
         {
-            expressionTest.TargetInstance = expressionTest.Target.Type.CreateInstance(expressionTest.Target.ClassFields);
             expressionTest.Name = $"Testing expression [{methodName}] in ";
             expressionTest.ExpressionInfo = this;
         }

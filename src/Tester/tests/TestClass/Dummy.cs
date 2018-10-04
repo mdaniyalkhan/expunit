@@ -106,9 +106,9 @@ namespace expunit.framework.tests.TestClass
             return _message;
         }
 
-        public void SetMessage(string value)
+        public void SetMessage(string message)
         {
-            _message = value + value;
+            _message = message + message;
         }
 
         public bool IsMessageNotNull()

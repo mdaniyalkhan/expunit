@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using expunit.framework.Exp;
 using expunit.framework.Model;
 using expunit.framework.tests.TestClass;
 using expunit.framework.Utility;
 using NUnit.Framework;
+using Shouldly;
 
 namespace expunit.framework.tests
 {
@@ -12,6 +14,9 @@ namespace expunit.framework.tests
     [TestFixture]
     public class TesterTests
     {
+        private const string MessageField = "_message";
+        private const string WrongFieldName = "_wrong_field_name";
+        private const string SquareRootMethod = "GetSquareRoot()";
         private Tester _tester;
 
         [SetUp]
@@ -38,9 +43,20 @@ namespace expunit.framework.tests
         [Test]
         public void TestMethod_GetMessage()
         {
+            // Solution 1
             ExpressionTest<Dummy>
-                .CreateMethodExpression(nameof(Dummy.GetMessage), typeof(Dummy).GetFieldValue("_message"))
+                .CreateMethodExpression(nameof(Dummy.GetMessage), typeof(Dummy).GetFieldValue(MessageField))
                 .TestAndVerify();
+
+            // Solution 2
+            // Arrange
+            var dummy = typeof(Dummy)
+                .CreateInstance() as Dummy;
+            // Act
+            var message = dummy?.GetMessage();
+
+            // Assert
+            message.ShouldBe(dummy.Evaluate<string>(MessageField));
         }
 
         [Test]
@@ -49,14 +65,27 @@ namespace expunit.framework.tests
             Assert.Throws<FieldNotFoundException>(
                 () =>
                     ExpressionTest<Dummy>
-                        .CreateMethodExpression(nameof(Dummy.GetMessage), typeof(Dummy).GetFieldValue("_wrong_field_name"))
+                        .CreateMethodExpression(nameof(Dummy.GetMessage), typeof(Dummy).GetFieldValue(WrongFieldName))
                         .TestAndVerify());
         }
 
         [Test]
         public void TestMethod_GetSquareRoot()
         {
-            ExpressionTest<Dummy>.CreateTest("GetSquareRoot()", 25.9422435421457).TestAndVerify();
+            const double expectedOutput = 25.9422435421457;
+
+            // Solution 1
+            ExpressionTest<Dummy>.CreateTest(SquareRootMethod, expectedOutput).TestAndVerify();
+
+            // Solution 2
+            // Arrange
+            var dummy = new Dummy();
+
+            // Act
+            var result = dummy.Evaluate<double>(SquareRootMethod);
+
+            // Assert
+            result.ShouldBe(expectedOutput);
         }
 
         [Test]
@@ -75,13 +104,41 @@ namespace expunit.framework.tests
         [Test]
         public void TestMethod_SetMessage()
         {
-            ExpressionTest<Dummy>.CreateWithOutputExpression("SetMessage", "_message", "@p0 + @p0").TestAndVerify();
+            var testMessage = "test-message";
+            var expression = MessageField;
+
+            // Solution 1
+            ExpressionTest<Dummy>.CreateWithOutputExpression(nameof(Dummy.SetMessage), expression, "@p0 + @p0").TestAndVerify();
+
+            // Solution 2
+            // Arrange
+            var dummy = new Dummy();
+
+            // Act
+            dummy.SetMessage(testMessage);
+
+            // Assert
+            dummy.Evaluate<string>(expression)
+                .ShouldBe(testMessage + testMessage);
         }
 
         [Test]
         public void TestMethod_GetException()
         {
-            ExpressionTest<Dummy>.CreateWithOutputExpression("GetException", "_exception").TestAndVerify();
+            const string outputExpression = "_exception";
+
+            // Solution 1
+            ExpressionTest<Dummy>.CreateWithOutputExpression(nameof(Dummy.GetException), outputExpression).TestAndVerify();
+
+            // Solution 2
+            // Arrange
+            var dummy = new Dummy();
+
+            // Act
+            var exception = dummy.GetException();
+
+            // Assert
+            exception.ShouldBe(dummy.Evaluate<Exception>(outputExpression));
         }
 
         [Test]
@@ -259,10 +316,10 @@ namespace expunit.framework.tests
         {
             var classInfo = ClassInfo<Dummy>.Create(new Dictionary<string, object>
             {
-                {"_message", "CustomMessage"}
+                {MessageField, "CustomMessage"}
             });
 
-            ExpressionTest<Dummy>.CreateTest("_message", classInfo, "CustomMessage").TestAndVerify();
+            ExpressionTest<Dummy>.CreateTest(MessageField, classInfo, "CustomMessage").TestAndVerify();
         }
 
         [Test]
@@ -350,7 +407,7 @@ namespace expunit.framework.tests
         {
             var classInfo = ClassInfo<Dummy>.Create(new Dictionary<string, dynamic>
             {
-                {"_message", "012345789"}
+                {MessageField, "012345789"}
             });
 
             ExpressionTest<Dummy>.CreateMethodExpression(nameof(Dummy.CharAt1), classInfo, "_message[1] == '1'").TestAndVerify();
