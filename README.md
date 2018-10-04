@@ -1,6 +1,8 @@
 # expunit
 Expression Based Unit Testing Library
 
+[![CircleCI](https://circleci.com/gh/mdaniyalkhan/expunit-java/tree/master.svg?style=shield)](https://circleci.com/gh/mdaniyalkhan/expunit-java/tree/master) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/circleci/circleci-docs/master/LICENSE)
+
 Library main points are following:
 
 * Shorter and convenient ways to test any class method.
