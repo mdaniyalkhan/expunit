@@ -49,24 +49,45 @@ namespace expunit.framework.tests.Utility
 
 
         [Test]
-        public void Test_GetValueOfIntegerGreaterThanMaxValue_ForIntegerType()
+        public void Test_GetMaxValue_ForIntegerType()
         {
             // Assert
             ((int)typeof(int).Get(string.Empty, int.MaxValue)).ShouldBe(2147483247);
         }
 
         [Test]
-        public void Test_GetValueOfNullableIntegerGreaterThanMaxValue_ForIntegerType()
+        public void Test_GetValue_ForNullableIntegerType()
         {
             // Assert
             ((int?)typeof(int?).Get(string.Empty, int.MaxValue)).ShouldBe(2147482687);
         }
 
         [Test]
-        public void Test_GetValueOfNullableIntegerArrayGreaterThanMaxValue_ForIntegerType()
+        public void Test_GetValue_ForNullableDateTimeType()
         {
             // Assert
-            ((int?[])typeof(int?[]).Get(string.Empty, int.MaxValue)).Length.ShouldBe(25);
+            ((DateTime?)typeof(DateTime?).Get()).ShouldBe(new DateTime(2960, 12, 15, 17, 16, 16));
+        }
+
+        [Test]
+        public void Test_GetValue_ForNullableDateTimeOffSetType()
+        {
+            // Assert
+            ((DateTimeOffset?)typeof(DateTimeOffset?).Get()).ShouldBe(new DateTime(2960, 12, 15, 17, 16, 16));
+        }
+
+        [Test]
+        public void Test_GetValue_ForNullableCharacter()
+        {
+            // Assert
+            ((char?)typeof(char?).Get()).ShouldBe('π');
+        }
+
+        [Test]
+        public void Test_GetValue_ForNullableBoolean()
+        {
+            // Assert
+            ((bool?)typeof(bool?).Get()).ShouldBe(true);
         }
 
         [Test]
@@ -129,7 +150,7 @@ namespace expunit.framework.tests.Utility
         public void Test_GetValue_ForDateTimeType()
         {
             // Assert
-            ((DateTime)typeof(DateTime).Get()).ShouldBe(new DateTime(2781, 12, 27, 23, 59, 59));
+            ((DateTime)typeof(DateTime).Get()).ShouldBe(new DateTime(2781, 1, 25, 22, 14, 14));
         }
 
         [Test]

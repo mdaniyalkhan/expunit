@@ -175,7 +175,7 @@ namespace expunit.framework.Utility
                     "0" :
                     type.GetValueLessThanMaxValue(index.ToString()), type);
             }
-            if (type == typeof(BigInteger))
+            if (type == typeof(BigInteger) || type == typeof(BigInteger?))
             {
                 return setDefaultValues ?
                     default(BigInteger) :
@@ -189,9 +189,18 @@ namespace expunit.framework.Utility
                     (char) index;
             }
 
-            if (type == typeof(DateTime))
+            if (type == typeof(DateTime) || type == typeof(DateTime?))
             {
                 return GetDateTime(index);
+            }
+
+            if (type == typeof(DateTimeOffset) || type == typeof(DateTimeOffset?))
+            {
+                return setDefaultValues ?
+                    type == typeof(DateTimeOffset?) ?
+                        (DateTimeOffset?) null :
+                        DateTimeOffset.MinValue :
+                    GetDateTime(index);
             }
 
             if (parameterName.EndsWith("id") && type == typeof(object))
@@ -598,18 +607,18 @@ namespace expunit.framework.Utility
             return list;
         }
 
-        private static dynamic ParseValue(Type type, int fieldIndex, string value)
+        private static dynamic ParseValue(Type type, int fieldIndex, string typeValue)
         {
             if (type.IsNumber())
             {
                 type = GetNumberUnderlyingType(type);
-                value = type.GetValueLessThanMaxValue(value);
-                return Convert.ChangeType(value, type);
+                typeValue = type.GetValueLessThanMaxValue(typeValue);
+                return Convert.ChangeType(typeValue, type);
             }
 
             if (type == typeof(bool))
             {
-                return int.Parse(value) % 2 == 0;
+                return int.Parse(typeValue) % 2 == 0;
             }
 
             if (type == typeof(DateTime))
@@ -619,7 +628,7 @@ namespace expunit.framework.Utility
 
             if (type == typeof(char))
             {
-                return (char) int.Parse(value);
+                return (char) int.Parse(typeValue);
             }
 
             if (type == typeof(Guid))
@@ -628,20 +637,30 @@ namespace expunit.framework.Utility
             }
 
             return type == typeof(string) ?
-                $"Test Output-{value}" :
+                $"Test Output-{typeValue}" :
                 CreateInstance(type, 0, false, 0);
         }
 
-        private static string GetValueLessThanMaxValue(this IReflect type, string value)
+        private static string GetValueLessThanMaxValue(this IReflect type, string previousValue)
         {
             var maxValue = type.GetMaxValue();
-            var validValue = Convert.ToDouble(value);
+            var validValue = Convert.ToDouble(previousValue);
             while (validValue > maxValue)
             {
                 validValue = validValue - maxValue;
             }
 
             return validValue.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static int GetValueLessThanEqualToGivenValue(this int integerValue, int maxValue)
+        {
+            while (integerValue > maxValue)
+            {
+                integerValue = integerValue - maxValue;
+            }
+
+            return integerValue;
         }
 
         private static int GetFieldIndexByName(this IReflect type, string fieldName)
@@ -657,17 +676,16 @@ namespace expunit.framework.Utility
             return -1;
         }
 
-        private static DateTime GetDateTime(int fieldIndex)
+        private static DateTime GetDateTime(int index)
         {
             var max = DateTime.MaxValue;
-            var index = 1 + fieldIndex;
             return new DateTime(
-                Math.Min(max.Year, 2000 + fieldIndex),
-                Math.Min(12, index),
-                Math.Min(27, index),
-                Math.Min(23, index),
-                Math.Min(59, index),
-                Math.Min(59, index));
+                (2000 + index).GetValueLessThanEqualToGivenValue(max.Year),
+                index.GetValueLessThanEqualToGivenValue(12),
+                index.GetValueLessThanEqualToGivenValue(27),
+                index.GetValueLessThanEqualToGivenValue(23),
+                index.GetValueLessThanEqualToGivenValue(59),
+                index.GetValueLessThanEqualToGivenValue(59));
         }
 
         public static dynamic CreateInstanceOfTypeHavingDefaultConstructor(this Type type)
