@@ -89,17 +89,17 @@ namespace expunit.framework.Utility
                     "!\\(|\\.Equals\\(|\\.CharAt\\(|[(]|[)]|[!]|\\+\\+|--|[+]|[-]|[*]|[/]|[%]|<=|>=|[<]|[>]|[!=]|==|&&|[{]|[}]|[,]|[?]|[:]|\\|\\|");
                 var methodExpr = expressionTest.Expressions;
                 expressionTest.Expressions = expressions;
-                var values = expressionTest.GetParentExpressionValue();
+                var typeValues = expressionTest.GetParentExpressionValue();
                 expressionTest.Expressions = methodExpr;
                 if (current.Equals("@p0"))
                 {
                     expressionValues[i] = expressionTest.ExpressionInfo?.ParameterValues[0];
                 }
-                else if (values.Length == 1 && values[0] != expressionTest.TargetInstance)
+                else if (typeValues.Length == 1 && typeValues[0] != expressionTest.TargetInstance)
                 {
-                    expressionValues[i] = values[0];
+                    expressionValues[i] = typeValues[0];
                 }
-                else if (values.Length == 1)
+                else if (typeValues.Length == 1)
                 {
                     try
                     {
@@ -110,20 +110,20 @@ namespace expunit.framework.Utility
                         expressionValues[i] = Enum.Enum.Instance.NotFound;
                     }
                 }
-                else if (values.Length > 1)
+                else if (typeValues.Length > 1)
                 {
                     var expressionsWithValues = new Dictionary<string, object>();
                     for (var j = 0; j < expressions.Length; j++)
                     {
-                        if (values[j] == expressionTest.TargetInstance)
+                        if (typeValues[j] == expressionTest.TargetInstance)
                         {
                             continue;
                         }
 
-                        values[j] = SetValue(values[j]);
+                        typeValues[j] = SetValue(typeValues[j]);
                         if (!expressionsWithValues.ContainsKey(expressions[j]))
                         {
-                            expressionsWithValues.Add(expressions[j], values[j]);
+                            expressionsWithValues.Add(expressions[j], typeValues[j]);
                         }
                     }
 
@@ -137,8 +137,8 @@ namespace expunit.framework.Utility
                     for (var parameterIndex = 0; parameterIndex < expressionInfo?.ParameterValues.Length; parameterIndex++)
                     {
                         var name = "@p" + parameterIndex;
-                        var value = SetValue(expressionInfo.ParameterValues[parameterIndex]);
-                        current = current.Replace(name, value?.ToString() ?? "null");
+                        var typeValue = SetValue(expressionInfo.ParameterValues[parameterIndex]);
+                        current = current.Replace(name, typeValue?.ToString() ?? "null");
                     }
 
                     current = Regex.Replace(current, "\\(\\)", "");

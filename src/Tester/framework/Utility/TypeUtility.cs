@@ -587,8 +587,8 @@ namespace expunit.framework.Utility
 
             for (var x = 0; x < objects.Length; x++)
             {
-                var value = x + fieldIndex.ToString();
-                objects[x] = ParseValue(type, fieldIndex, value);
+                var typeValue = x + fieldIndex.ToString();
+                objects[x] = ParseValue(type, fieldIndex, typeValue);
             }
 
             return objects;
@@ -600,8 +600,8 @@ namespace expunit.framework.Utility
 
             for (var x = 0; x < 25; x++)
             {
-                var value = x + fieldIndex.ToString();
-                list.Add(ParseValue(type, fieldIndex, value));
+                var typeValue = x + fieldIndex.ToString();
+                list.Add(ParseValue(type, fieldIndex, typeValue));
             }
 
             return list;
@@ -805,20 +805,20 @@ namespace expunit.framework.Utility
                             continue;
                         }
 
-                        var value = Get(typeInfo, $"{type.Name}.{fieldInfo.Name}", index + listIndex, InitializeInstanceCollectionFields, setDefaultValues);
-                        if (value != null)
+                        var fieldValue = Get(typeInfo, $"{type.Name}.{fieldInfo.Name}", index + listIndex, InitializeInstanceCollectionFields, setDefaultValues);
+                        if (fieldValue != null)
                         {
-                            fieldInfo.SetValue(instance, value);
+                            fieldInfo.SetValue(instance, fieldValue);
                         }
                         else if (defaultValue == null)
                         {
-                            fieldInfo.SetValue(instance, type.CreateInstance(listIndex, setDefaultValues, levelInitUninitializedMembers));
+                            fieldInfo.SetValue(instance, typeInfo.CreateInstance(listIndex, setDefaultValues, levelInitUninitializedMembers));
                         }
                     }
                 }
                 catch (Exception exp)
                 {
-                    Debug.WriteLine($"Could not Set Property {fieldInfo.Name} because of {exp}");
+                    Debug.WriteLine($"Could not Set Field {fieldInfo.Name} because of {exp}");
                 }
             }
         }
