@@ -1,7 +1,5 @@
-# expunit
+# expunit [![Build status](https://ci.appveyor.com/api/projects/status/lhbgk8r2iceb442l/branch/master?svg=true)](https://ci.appveyor.com/project/mdaniyalkhan/expunit/branch/master) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/circleci/circleci-docs/master/LICENSE)
 Expression Based Unit Testing Library
-
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/circleci/circleci-docs/master/LICENSE)
 
 Library main points are following:
 
