@@ -8,7 +8,7 @@ trigger:
 
 pool:
   name: 'default'
-  vmimage: 'az401'
+  vmimage: 'agentA'
 
 variables:
   solution: '**/*.sln'
